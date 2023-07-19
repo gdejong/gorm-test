@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-faker/faker/v4"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -43,14 +44,20 @@ func main() {
 }
 
 func handleCreate(db *gorm.DB, logger *logrus.Logger) {
+	name := faker.Name()
+
 	user := &User{
-		Name: "Klaas",
+		Name: name,
 	}
+
 	res := db.Create(user)
 
 	if res.Error != nil {
 		logger.WithError(res.Error).Fatal("Failed to create user")
 	}
 
-	logger.WithField("ID", user.ID).Info("Created user")
+	logger.WithFields(logrus.Fields{
+		"id":   user.ID,
+		"name": user.Name,
+	}).Info("Created user")
 }
