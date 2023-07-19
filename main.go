@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/go-faker/faker/v4"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
@@ -14,6 +15,7 @@ const (
 
 	commandCreate = "create"
 	commandDelete = "delete"
+	commandRead   = "read"
 )
 
 func main() {
@@ -30,7 +32,10 @@ func main() {
 	command := os.Args[1]
 
 	logger.WithField("dsn", dsn).Info("Opening database")
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
+		// TODO can we use the logrus logger here?
+		// Logger:
+	})
 	if err != nil {
 		panic("failed to connect database: " + err.Error())
 	}
@@ -51,8 +56,30 @@ func main() {
 			logger.WithError(err).Fatal("Failed to parse id")
 		}
 		handleDelete(db, logger, id)
+	case commandRead:
+		id, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to parse id")
+		}
+		handleRead(db, logger, id)
+	}
+}
+
+func handleRead(db *gorm.DB, logger *logrus.Logger, id int) {
+	user := &User{}
+	result := db.First(user, id)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		logger.WithField("id", id).Warn("User not found")
+
+		return
 	}
 
+	logger.WithFields(logrus.Fields{
+		"id":        user.ID,
+		"name":      user.Name,
+		"createdAt": user.CreatedAt,
+	}).Info("User")
 }
 
 func handleDelete(db *gorm.DB, logger *logrus.Logger, id int) {
