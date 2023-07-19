@@ -19,7 +19,7 @@ const (
 func main() {
 	// Create a logger.
 	logger := logrus.New()
-	logrus.SetOutput(os.Stdout)
+	logger.SetOutput(os.Stdout)
 
 	// Make sure we have a command line argument.
 	if len(os.Args) < 2 {
